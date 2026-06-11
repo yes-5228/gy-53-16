@@ -12,6 +12,7 @@ const error = ref("");
 const anomalies = ref([]);
 const pendingCount = ref(0);
 const anomalyMessage = ref("");
+const topNotice = ref("");
 const showAnomalyForm = ref(false);
 const showResolveModal = ref(false);
 const resolvingAnomaly = ref(null);
@@ -36,7 +37,11 @@ const statItems = computed(() => [
 const filteredAnomalies = computed(() => {
   if (anomalyFilter.value === "all") return anomalies.value;
   if (anomalyFilter.value === "pending") return anomalies.value.filter((a) => a.status === "pending");
-  return anomalies.value.filter((a) => a.status !== "pending");
+  if (anomalyFilter.value === "handled")
+    return anomalies.value.filter((a) => a.status === "resolved" || a.status === "dismissed");
+  if (anomalyFilter.value === "auto_closed")
+    return anomalies.value.filter((a) => a.status === "auto_closed");
+  return anomalies.value;
 });
 
 async function loadSpaces() {
@@ -66,8 +71,15 @@ async function loadAnomalies() {
 
 async function updateStatus(space, status) {
   const plate = status === "occupied" || status === "abnormal" ? space.plate_number || "临A00001" : null;
-  await parkingApi.updateSpace(space.id, { status, plate_number: plate });
+  const result = await parkingApi.updateSpace(space.id, { status, plate_number: plate });
+  if (result.closed_anomalies && result.closed_anomalies > 0) {
+    topNotice.value = `已将 ${space.code} 的 ${result.closed_anomalies} 条待处理异常一并关闭`;
+    setTimeout(() => {
+      topNotice.value = "";
+    }, 3000);
+  }
   await loadSpaces();
+  await loadAnomalies();
 }
 
 function openAnomalyForm(spaceCode, plateNumber) {
@@ -134,6 +146,7 @@ onMounted(() => {
 
     <StatGrid :stats="statItems" />
     <p v-if="error" class="error-text">{{ error }}</p>
+    <p v-if="topNotice" class="hint-text">{{ topNotice }}</p>
 
     <section class="table-section">
       <h3 style="display: flex; align-items: center; justify-content: space-between;">
@@ -142,6 +155,7 @@ onMounted(() => {
           <option value="all">全部</option>
           <option value="pending">待处理</option>
           <option value="handled">已处理</option>
+          <option value="auto_closed">已关闭</option>
         </select>
       </h3>
       <div class="table-wrap">

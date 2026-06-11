@@ -21,6 +21,7 @@ const labels = {
   pending: "待处理",
   resolved: "已处理",
   dismissed: "已忽略",
+  auto_closed: "已关闭",
 };
 </script>
 

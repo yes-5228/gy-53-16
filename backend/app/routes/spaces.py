@@ -34,17 +34,19 @@ def update_space(space_id):
         if not current:
             return {"message": "车位不存在"}, 404
 
+        closed_anomalies = 0
         if current["status"] == "abnormal" and status != "abnormal":
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE anomalies
-                SET status = 'dismissed',
+                SET status = 'auto_closed',
                     result = '手动修改车位状态，自动关闭待处理异常',
                     resolved_at = datetime('now', 'localtime')
                 WHERE space_code = ? AND status = 'pending'
                 """,
                 (current["code"],),
             )
+            closed_anomalies = cursor.rowcount
 
         conn.execute(
             """
@@ -56,4 +58,7 @@ def update_space(space_id):
         )
         row = conn.execute("SELECT * FROM spaces WHERE id = ?", (space_id,)).fetchone()
 
-    return dict(row)
+    result = dict(row)
+    if closed_anomalies > 0:
+        result["closed_anomalies"] = closed_anomalies
+    return result

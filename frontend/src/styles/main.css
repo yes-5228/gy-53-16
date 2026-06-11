@@ -246,6 +246,11 @@ select {
   color: #146346;
 }
 
+.status-auto_closed {
+  background: #e1ecff;
+  color: #1b4fb8;
+}
+
 .form-panel {
   display: grid;
   gap: 14px;
