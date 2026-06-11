@@ -29,6 +29,7 @@ const statItems = computed(() => [
   { label: "占用", value: stats.value.occupied || 0 },
   { label: "预约", value: stats.value.reserved || 0 },
   { label: "维护", value: stats.value.maintenance || 0 },
+  { label: "异常车位", value: stats.value.abnormal || 0 },
   { label: "待处理异常", value: pendingCount.value },
 ]);
 

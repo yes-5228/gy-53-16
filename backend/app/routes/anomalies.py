@@ -85,23 +85,27 @@ def resolve_anomaly(anomaly_id):
             (status, result, anomaly_id),
         )
 
-        if anomaly["previous_status"]:
+        remaining_pending = conn.execute(
+            "SELECT COUNT(*) AS count FROM anomalies WHERE space_code = ? AND status = 'pending'",
+            (anomaly["space_code"],),
+        ).fetchone()["count"]
+
+        if remaining_pending == 0:
+            earliest = conn.execute(
+                """
+                SELECT previous_status FROM anomalies
+                WHERE space_code = ? ORDER BY created_at ASC LIMIT 1
+                """,
+                (anomaly["space_code"],),
+            ).fetchone()
+            restore_status = (earliest and earliest["previous_status"]) or "free"
             conn.execute(
                 """
                 UPDATE spaces
                 SET status = ?, updated_at = datetime('now', 'localtime')
                 WHERE code = ? AND status = 'abnormal'
                 """,
-                (anomaly["previous_status"], anomaly["space_code"]),
-            )
-        else:
-            conn.execute(
-                """
-                UPDATE spaces
-                SET status = 'free', updated_at = datetime('now', 'localtime')
-                WHERE code = ? AND status = 'abnormal'
-                """,
-                (anomaly["space_code"],),
+                (restore_status, anomaly["space_code"]),
             )
 
         row = conn.execute("SELECT * FROM anomalies WHERE id = ?", (anomaly_id,)).fetchone()
