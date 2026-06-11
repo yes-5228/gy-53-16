@@ -11,6 +11,7 @@ const labels = {
   occupied: "占用",
   reserved: "预约",
   maintenance: "维护",
+  abnormal: "异常",
   active: "有效",
   expired: "到期",
   paused: "暂停",

@@ -217,7 +217,8 @@ select {
 }
 
 .status-occupied,
-.status-expired {
+.status-expired,
+.status-abnormal {
   background: #fde4df;
   color: #9b2e1c;
 }

@@ -75,11 +75,17 @@ def init_db():
                 description TEXT NOT NULL,
                 result TEXT,
                 status TEXT NOT NULL DEFAULT 'pending',
+                previous_status TEXT,
                 created_at TEXT NOT NULL,
                 resolved_at TEXT
             );
             """
         )
+
+        try:
+            conn.execute("ALTER TABLE anomalies ADD COLUMN previous_status TEXT")
+        except sqlite3.OperationalError:
+            pass
 
         existing = conn.execute("SELECT COUNT(*) AS count FROM spaces").fetchone()["count"]
         if existing == 0:

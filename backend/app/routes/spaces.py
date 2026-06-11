@@ -24,7 +24,7 @@ def update_space(space_id):
     data = request.get_json() or {}
     status = data.get("status")
     plate_number = data.get("plate_number")
-    allowed = {"free", "occupied", "reserved", "maintenance"}
+    allowed = {"free", "occupied", "reserved", "maintenance", "abnormal"}
 
     if status not in allowed:
         return {"message": "车位状态不合法"}, 400
@@ -36,7 +36,7 @@ def update_space(space_id):
             SET status = ?, plate_number = ?, updated_at = datetime('now', 'localtime')
             WHERE id = ?
             """,
-            (status, plate_number if status == "occupied" else None, space_id),
+            (status, plate_number if status in ("occupied", "abnormal") else None, space_id),
         )
         row = conn.execute("SELECT * FROM spaces WHERE id = ?", (space_id,)).fetchone()
 

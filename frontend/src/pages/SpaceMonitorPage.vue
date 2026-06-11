@@ -15,6 +15,7 @@ const anomalyMessage = ref("");
 const showAnomalyForm = ref(false);
 const showResolveModal = ref(false);
 const resolvingAnomaly = ref(null);
+const anomalyFilter = ref("all");
 const resolveForm = reactive({ result: "", status: "resolved" });
 const form = reactive({
   space_code: "",
@@ -30,6 +31,12 @@ const statItems = computed(() => [
   { label: "维护", value: stats.value.maintenance || 0 },
   { label: "待处理异常", value: pendingCount.value },
 ]);
+
+const filteredAnomalies = computed(() => {
+  if (anomalyFilter.value === "all") return anomalies.value;
+  if (anomalyFilter.value === "pending") return anomalies.value.filter((a) => a.status === "pending");
+  return anomalies.value.filter((a) => a.status !== "pending");
+});
 
 async function loadSpaces() {
   loading.value = true;
@@ -47,16 +54,17 @@ async function loadSpaces() {
 
 async function loadAnomalies() {
   try {
-    const data = await parkingApi.getAnomalies({ status: "pending" });
+    const data = await parkingApi.getAnomalies();
     anomalies.value = data.items;
     pendingCount.value = data.pending_count;
   } catch {
+    anomalies.value = [];
     pendingCount.value = 0;
   }
 }
 
 async function updateStatus(space, status) {
-  const plate = status === "occupied" ? space.plate_number || "临A00001" : null;
+  const plate = status === "occupied" || status === "abnormal" ? space.plate_number || "临A00001" : null;
   await parkingApi.updateSpace(space.id, { status, plate_number: plate });
   await loadSpaces();
 }
@@ -75,6 +83,7 @@ async function submitAnomaly() {
     await parkingApi.createAnomaly(form);
     showAnomalyForm.value = false;
     await loadAnomalies();
+    await loadSpaces();
   } catch (err) {
     anomalyMessage.value = err.message;
   }
@@ -97,8 +106,9 @@ async function submitResolve() {
     showResolveModal.value = false;
     resolvingAnomaly.value = null;
     await loadAnomalies();
-  } catch {
-    anomalyMessage.value = "处理失败";
+    await loadSpaces();
+  } catch (err) {
+    anomalyMessage.value = err.message || "处理失败";
   }
 }
 
@@ -124,28 +134,45 @@ onMounted(() => {
     <StatGrid :stats="statItems" />
     <p v-if="error" class="error-text">{{ error }}</p>
 
-    <section v-if="anomalies.length > 0 || pendingCount > 0" class="table-section">
-      <h3>待处理异常</h3>
+    <section class="table-section">
+      <h3 style="display: flex; align-items: center; justify-content: space-between;">
+        <span>异常记录</span>
+        <select v-model="anomalyFilter" style="width: auto; min-width: 140px;">
+          <option value="all">全部</option>
+          <option value="pending">待处理</option>
+          <option value="handled">已处理</option>
+        </select>
+      </h3>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>车位</th>
               <th>车牌</th>
-              <th>说明</th>
+              <th>异常说明</th>
               <th>上报时间</th>
+              <th>处理结果</th>
+              <th>处理时间</th>
               <th>状态</th>
               <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in anomalies" :key="a.id">
+            <tr v-for="a in filteredAnomalies" :key="a.id">
               <td>{{ a.space_code }}</td>
               <td>{{ a.plate_number || "—" }}</td>
               <td>{{ a.description }}</td>
               <td>{{ a.created_at }}</td>
+              <td>{{ a.result || "—" }}</td>
+              <td>{{ a.resolved_at || "—" }}</td>
               <td><StatusBadge :status="a.status" /></td>
-              <td><button class="small-button" type="button" @click="openResolveModal(a)">处理</button></td>
+              <td>
+                <button v-if="a.status === 'pending'" class="small-button" type="button" @click="openResolveModal(a)">处理</button>
+                <span v-else style="color:#65746e;">已完成</span>
+              </td>
+            </tr>
+            <tr v-if="filteredAnomalies.length === 0">
+              <td colspan="8" style="text-align:center; color:#65746e; padding: 24px;">暂无异常记录</td>
             </tr>
           </tbody>
         </table>
@@ -165,6 +192,7 @@ onMounted(() => {
           <option value="occupied">占用</option>
           <option value="reserved">预约</option>
           <option value="maintenance">维护</option>
+          <option value="abnormal">异常</option>
         </select>
         <button class="small-button" type="button" @click="openAnomalyForm(space.code, space.plate_number)">上报异常</button>
       </article>
