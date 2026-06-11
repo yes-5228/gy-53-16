@@ -67,6 +67,17 @@ def init_db():
                 invoice_no TEXT NOT NULL UNIQUE,
                 status TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS anomalies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                space_code TEXT NOT NULL,
+                plate_number TEXT,
+                description TEXT NOT NULL,
+                result TEXT,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TEXT NOT NULL,
+                resolved_at TEXT
+            );
             """
         )
 

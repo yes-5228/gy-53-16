@@ -17,6 +17,9 @@ const labels = {
   parking: "停车中",
   paid: "已结算",
   issued: "已开具",
+  pending: "待处理",
+  resolved: "已处理",
+  dismissed: "已忽略",
 };
 </script>
 

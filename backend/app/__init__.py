@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from .database import init_db
+from .routes.anomalies import anomalies_bp
 from .routes.invoices import invoices_bp
 from .routes.monthly_cards import monthly_cards_bp
 from .routes.parking import parking_bp
@@ -15,6 +16,7 @@ def create_app():
     init_db()
 
     app.register_blueprint(spaces_bp, url_prefix="/api/spaces")
+    app.register_blueprint(anomalies_bp, url_prefix="/api/anomalies")
     app.register_blueprint(monthly_cards_bp, url_prefix="/api/monthly-cards")
     app.register_blueprint(parking_bp, url_prefix="/api/parking")
     app.register_blueprint(invoices_bp, url_prefix="/api/invoices")

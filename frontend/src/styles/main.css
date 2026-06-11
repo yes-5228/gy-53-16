@@ -140,7 +140,7 @@ select {
 .stat-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  grid-template-columns: repeat(6, minmax(100px, 1fr));
 }
 
 .stat-card,
@@ -229,9 +229,20 @@ select {
 }
 
 .status-maintenance,
-.status-paused {
+.status-paused,
+.status-dismissed {
   background: #e6e9ee;
   color: #4c5964;
+}
+
+.status-pending {
+  background: #fde4df;
+  color: #9b2e1c;
+}
+
+.status-resolved {
+  background: #dff3ea;
+  color: #146346;
 }
 
 .form-panel {
@@ -317,6 +328,32 @@ th {
 
 .muted {
   opacity: 0.6;
+}
+
+.modal-overlay {
+  align-items: center;
+  background: rgb(0 0 0 / 40%);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.modal-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+  max-width: 460px;
+  padding: 24px;
+  width: 90%;
+}
+
+.modal-panel h3 {
+  margin: 0 0 16px;
 }
 
 @media (max-width: 860px) {
