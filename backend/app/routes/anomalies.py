@@ -91,14 +91,21 @@ def resolve_anomaly(anomaly_id):
         ).fetchone()["count"]
 
         if remaining_pending == 0:
-            earliest = conn.execute(
-                """
-                SELECT previous_status FROM anomalies
-                WHERE space_code = ? ORDER BY created_at ASC LIMIT 1
-                """,
+            space = conn.execute(
+                "SELECT plate_number FROM spaces WHERE code = ?",
                 (anomaly["space_code"],),
             ).fetchone()
-            restore_status = (earliest and earliest["previous_status"]) or "free"
+            if space and space["plate_number"]:
+                restore_status = "occupied"
+            else:
+                earliest = conn.execute(
+                    """
+                    SELECT previous_status FROM anomalies
+                    WHERE space_code = ? ORDER BY created_at ASC LIMIT 1
+                    """,
+                    (anomaly["space_code"],),
+                ).fetchone()
+                restore_status = (earliest and earliest["previous_status"]) or "free"
             conn.execute(
                 """
                 UPDATE spaces

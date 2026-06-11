@@ -30,6 +30,22 @@ def update_space(space_id):
         return {"message": "车位状态不合法"}, 400
 
     with get_connection() as conn:
+        current = conn.execute("SELECT * FROM spaces WHERE id = ?", (space_id,)).fetchone()
+        if not current:
+            return {"message": "车位不存在"}, 404
+
+        if current["status"] == "abnormal" and status != "abnormal":
+            conn.execute(
+                """
+                UPDATE anomalies
+                SET status = 'dismissed',
+                    result = '手动修改车位状态，自动关闭待处理异常',
+                    resolved_at = datetime('now', 'localtime')
+                WHERE space_code = ? AND status = 'pending'
+                """,
+                (current["code"],),
+            )
+
         conn.execute(
             """
             UPDATE spaces
@@ -40,6 +56,4 @@ def update_space(space_id):
         )
         row = conn.execute("SELECT * FROM spaces WHERE id = ?", (space_id,)).fetchone()
 
-    if not row:
-        return {"message": "车位不存在"}, 404
     return dict(row)
